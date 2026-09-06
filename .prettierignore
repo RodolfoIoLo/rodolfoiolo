@@ -1,0 +1,10 @@
+.next
+out
+node_modules
+coverage
+playwright-report
+test-results
+pnpm-lock.yaml
+server/generated
+web/types/openapi.d.ts
+docs/api/openapi.yaml

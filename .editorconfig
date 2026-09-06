@@ -1,0 +1,20 @@
+# 为项目提供统一的编辑器行为(编码,缩进,行尾,末尾换行,尾随空白处理)
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+[*.go]
+indent_style = tab
+indent_size = 4
+
+[*.{md,yaml,yml}]
+trim_trailing_whitespace = false
+
+[Makefile]
+indent_style = tab

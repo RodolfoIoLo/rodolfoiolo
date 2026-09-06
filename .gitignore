@@ -1,0 +1,49 @@
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+secrets/*
+!secrets/.gitkeep
+*.pem
+*.key
+
+# Editors and operating systems
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.DS_Store
+Thumbs.db
+
+# Node and Next.js
+node_modules/
+.pnpm-store/
+.next/
+out/
+coverage/
+playwright-report/
+test-results/
+*.tsbuildinfo
+
+# Go
+server/bin/
+server/coverage.out
+server/tmp/
+
+# Runtime data
+data/
+uploads/
+backups/
+*.log
+
+# Temporary files
+*.tmp
+*.swp
+
+adr
+
+design
+
+operations
+
+taskbook

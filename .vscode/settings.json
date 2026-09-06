@@ -1,0 +1,19 @@
+{
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "files.trimTrailingWhitespace": true,
+  "[go]": {
+    "editor.defaultFormatter": "golang.go"
+  },
+  "[javascript][javascriptreact][typescript][typescriptreact][json][jsonc][css][markdown][yaml]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "yaml.schemas": {
+    "https://spec.openapis.org/oas/3.0/schema/2024-10-18": "docs/api/openapi.yaml"
+  }
+}
