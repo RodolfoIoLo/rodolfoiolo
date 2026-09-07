@@ -22,16 +22,17 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v5
 
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+
       - name: Set up Node.js
         uses: actions/setup-node@v5
         with:
           node-version-file: .node-version
-
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Install pnpm
-        run: corepack install --global pnpm@11.19.0
+          cache: pnpm
 
       - name: Install workspace tools
         run: pnpm install --frozen-lockfile
