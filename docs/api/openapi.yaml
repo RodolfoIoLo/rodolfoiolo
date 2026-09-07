@@ -1,0 +1,2268 @@
+openapi: 3.0.3
+info:
+  title: 个人网站 API
+  description: |
+    个人网站后端接口文档，基于 OpenAPI 3.0 规范。
+    所有接口统一前缀 /api/v1，统一响应格式。
+    认证采用 JWT Access Token (Header) + Refresh Token (HttpOnly Cookie)。
+    匿名互动（点赞/评论）基于签名访客 ID Cookie。
+  version: "1.1.1"
+  contact:
+    name: API Support
+    email: admin@example.com
+  license:
+    name: MIT
+
+servers:
+  - url: https://example.com/api/v1
+    description: 生产环境
+  - url: http://localhost:8080/api/v1
+    description: 本地开发环境
+
+tags:
+  - name: Auth
+    description: 认证相关接口
+  - name: Articles
+    description: 文章管理接口
+  - name: Projects
+    description: 项目展示接口
+  - name: Categories
+    description: 分类管理接口
+  - name: Tags
+    description: 标签管理接口
+  - name: Comments
+    description: 评论接口（v1.2）
+  - name: Likes
+    description: 点赞接口（v1.2）
+  - name: Admin
+    description: 后台管理接口
+  - name: Site
+    description: 站点设置与元数据接口
+
+paths:
+  # ==================== Auth ====================
+  /auth/login:
+    post:
+      operationId: login
+      tags: [Auth]
+      summary: 用户登录
+      description: |
+        使用用户名和密码登录。成功后：
+        - 返回 Access Token（JSON body，前端存内存）
+        - 通过 Set-Cookie 设置 Refresh Token（HttpOnly + Secure + SameSite=Lax）
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: 登录成功
+          headers:
+            Set-Cookie:
+              description: Refresh Token Cookie
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AccessToken'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /auth/refresh:
+    post:
+      operationId: refreshAccessToken
+      tags: [Auth]
+      summary: 刷新 Access Token
+      description: |
+        使用 Cookie 中的 Refresh Token 获取新的 Access Token。浏览器客户端必须使用 `credentials: include`，不应手动设置 HttpOnly Cookie。
+        采用 Token 轮换：每次刷新吊销旧 Refresh Token，签发新的。
+        若旧 Token 被重复使用（重放攻击），吊销该用户所有 Refresh Token。
+      security:
+        - RefreshCookie: []
+      responses:
+        '200':
+          description: 刷新成功
+          headers:
+            Set-Cookie:
+              description: 新的 Refresh Token Cookie
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AccessToken'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [Auth]
+      summary: 登出
+      description: 吊销当前 Refresh Token 并清除 Cookie
+      security:
+        - RefreshCookie: []
+      responses:
+        '200':
+          description: 登出成功并清除 Refresh Token Cookie
+          headers:
+            Set-Cookie:
+              description: 使 refresh_token 立即过期的 Cookie
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/me:
+    get:
+      operationId: getCurrentUser
+      tags: [Auth]
+      summary: 获取当前用户信息
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 用户信息
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ==================== Articles ====================
+  /articles:
+    get:
+      operationId: listArticles
+      tags: [Articles]
+      summary: 获取文章列表
+      description: 分页获取已发布文章列表，支持分类、标签、搜索筛选
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: category
+          in: query
+          description: 分类 slug
+          schema:
+            type: string
+        - name: tag
+          in: query
+          description: 标签 slug
+          schema:
+            type: string
+        - name: keyword
+          in: query
+          description: 搜索关键词
+          schema:
+            type: string
+        - name: sort
+          in: query
+          description: 排序方式
+          schema:
+            type: string
+            enum: [newest, hottest, views]
+            default: newest
+      responses:
+        '200':
+          description: 文章列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ArticleListResponse'
+
+    post:
+      operationId: createArticle
+      tags: [Articles]
+      summary: 创建文章
+      description: 创建新文章（默认草稿状态）
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleCreateRequest'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Article'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /articles/archive:
+    get:
+      operationId: listArticleArchive
+      tags: [Articles]
+      summary: 获取文章归档
+      description: 按年份-月份分组返回所有已发布文章
+      responses:
+        '200':
+          description: 归档数据
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/ArchiveGroup'
+
+  /articles/{slug}:
+    get:
+      operationId: getArticle
+      tags: [Articles]
+      summary: 获取文章详情
+      description: 根据 slug 获取文章详情（含 Markdown 正文），同时浏览量 +1
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 文章详情
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ArticleDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      operationId: updateArticle
+      tags: [Articles]
+      summary: 更新文章
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ArticleUpdateRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Article'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      operationId: deleteArticle
+      tags: [Articles]
+      summary: 删除文章
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /articles/{slug}/publish:
+    post:
+      operationId: publishArticle
+      tags: [Articles]
+      summary: 发布文章
+      description: 将草稿状态的文章发布，设置 published_at
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 发布成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Article'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /articles/{slug}/unpublish:
+    post:
+      operationId: unpublishArticle
+      tags: [Articles]
+      summary: 取消发布（转为草稿）
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /articles/{slug}/top:
+    post:
+      operationId: setArticleTop
+      tags: [Articles]
+      summary: 设置/取消置顶
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [is_top]
+              properties:
+                is_top:
+                  type: boolean
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ==================== Projects ====================
+  /projects:
+    get:
+      operationId: listProjects
+      tags: [Projects]
+      summary: 获取项目列表
+      description: 获取所有 active 状态的项目，支持精选筛选
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: featured
+          in: query
+          description: 仅返回精选项目
+          schema:
+            type: boolean
+        - name: technology
+          in: query
+          description: 按技术栈筛选
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 项目列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ProjectListResponse'
+
+    post:
+      operationId: createProject
+      tags: [Projects]
+      summary: 创建项目
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectCreateRequest'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Project'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /projects/{slug}:
+    get:
+      operationId: getProject
+      tags: [Projects]
+      summary: 获取项目详情
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 项目详情
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ProjectDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      operationId: updateProject
+      tags: [Projects]
+      summary: 更新项目
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectUpdateRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Project'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      operationId: deleteProject
+      tags: [Projects]
+      summary: 删除项目
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ==================== Categories ====================
+  /categories:
+    get:
+      operationId: listCategories
+      tags: [Categories]
+      summary: 获取所有分类
+      responses:
+        '200':
+          description: 分类列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Category'
+
+    post:
+      operationId: createCategory
+      tags: [Categories]
+      summary: 创建分类
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Category'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /categories/{slug}:
+    get:
+      operationId: getCategory
+      tags: [Categories]
+      summary: 获取分类详情
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 分类详情
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Category'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      operationId: updateCategory
+      tags: [Categories]
+      summary: 更新分类
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Category'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      operationId: deleteCategory
+      tags: [Categories]
+      summary: 删除分类
+      description: 该分类下有文章时拒绝删除（需先迁移文章）
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  # ==================== Tags ====================
+  /tags:
+    get:
+      operationId: listTags
+      tags: [Tags]
+      summary: 获取所有标签
+      responses:
+        '200':
+          description: 标签列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Tag'
+
+    post:
+      operationId: createTag
+      tags: [Tags]
+      summary: 创建标签
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagRequest'
+      responses:
+        '201':
+          description: 创建成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Tag'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /tags/{slug}:
+    get:
+      operationId: getTag
+      tags: [Tags]
+      summary: 获取标签详情
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 标签详情
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Tag'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      operationId: updateTag
+      tags: [Tags]
+      summary: 更新标签
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TagRequest'
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Tag'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      operationId: deleteTag
+      tags: [Tags]
+      summary: 删除标签
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ==================== Comments (v1.2) ====================
+  /articles/{slug}/comments:
+    get:
+      operationId: listArticleComments
+      tags: [Comments]
+      summary: 获取文章评论列表
+      description: |
+        获取已审核通过的评论，树形结构（最多两层：一级评论 + 回复）。
+        基于签名访客 ID Cookie 识别用户。
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+      responses:
+        '200':
+          description: 评论列表（树形）
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CommentListResponse'
+
+    post:
+      operationId: createComment
+      tags: [Comments]
+      summary: 发表评论
+      description: |
+        匿名发表评论，默认 pending 状态。
+        包含 Honeypot 隐藏字段（website_url，正常用户不会填写）。
+        限制：内容 ≤2000 字，链接数 ≤3，每访客 10 条/小时。
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentCreateRequest'
+      responses:
+        '201':
+          description: 评论提交成功（待审核）
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/Comment'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /comments/{id}:
+    delete:
+      operationId: deleteComment
+      tags: [Comments]
+      summary: 删除评论
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/comments:
+    get:
+      operationId: listAdminComments
+      tags: [Admin, Comments]
+      summary: 后台获取评论列表
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending, approved, rejected, all]
+            default: all
+      responses:
+        '200':
+          description: 评论列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CommentListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/comments/{id}/approve:
+    post:
+      operationId: approveComment
+      tags: [Admin, Comments]
+      summary: 审核通过评论
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/comments/{id}/reject:
+    post:
+      operationId: rejectComment
+      tags: [Admin, Comments]
+      summary: 拒绝评论
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ==================== Likes (v1.2) ====================
+  /articles/{slug}/like:
+    put:
+      operationId: setArticleLike
+      tags: [Likes]
+      summary: 点赞/取消点赞（幂等）
+      description: |
+        幂等操作：根据 action 字段点赞或取消点赞。
+        基于签名访客 ID Cookie 去重。重复点赞不报错，返回当前状态。
+        限流：每访客 30 次/小时。
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LikeRequest'
+      responses:
+        '200':
+          description: 操作成功，返回当前点赞状态
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/LikeStatus'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /articles/{slug}/like/status:
+    get:
+      operationId: getArticleLikeStatus
+      tags: [Likes]
+      summary: 获取点赞状态
+      description: 查询当前访客是否已点赞及点赞总数
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 点赞状态
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/LikeStatus'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ==================== Admin ====================
+  /admin/dashboard:
+    get:
+      operationId: getAdminDashboard
+      tags: [Admin]
+      summary: 后台数据概览
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 统计数据
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/DashboardStats'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/articles:
+    get:
+      operationId: listAdminArticles
+      tags: [Admin, Articles]
+      summary: 后台获取文章列表（含草稿）
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, published, archived, all]
+            default: all
+        - name: keyword
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 文章列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ArticleListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/projects:
+    get:
+      operationId: listAdminProjects
+      tags: [Admin, Projects]
+      summary: 后台获取项目列表（含已归档）
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/PageSizeParam'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, archived, all]
+            default: all
+      responses:
+        '200':
+          description: 项目列表
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ProjectListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # ==================== Site ====================
+  /site/settings:
+    get:
+      operationId: getSiteSettings
+      tags: [Site]
+      summary: 获取站点设置（公开）
+      responses:
+        '200':
+          description: 站点设置
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SiteSettings'
+
+    put:
+      operationId: updateSiteSettings
+      tags: [Site]
+      summary: 更新站点设置
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SiteSettings'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /site/stats:
+    get:
+      operationId: getSiteStats
+      tags: [Site]
+      summary: 获取公开统计数据
+      description: 首页展示用的统计数据（文章总数、项目总数等）
+      responses:
+        '200':
+          description: 统计数据
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PublicStats'
+
+  # ==================== Root metadata (outside /api/v1) ====================
+  /rss.xml:
+    servers:
+      - url: https://example.com
+        description: 生产环境根路径
+      - url: http://localhost:8080
+        description: 本地开发根路径
+    get:
+      operationId: getRss
+      tags: [Site]
+      summary: 获取 RSS
+      responses:
+        '200':
+          description: RSS 2.0 XML
+          content:
+            application/rss+xml:
+              schema:
+                type: string
+
+  /sitemap.xml:
+    servers:
+      - url: https://example.com
+        description: 生产环境根路径
+      - url: http://localhost:8080
+        description: 本地开发根路径
+    get:
+      operationId: getSitemap
+      tags: [Site]
+      summary: 获取 Sitemap
+      responses:
+        '200':
+          description: Sitemap XML
+          content:
+            application/xml:
+              schema:
+                type: string
+
+  /upload/image:
+    post:
+      operationId: uploadImage
+      tags: [Admin]
+      summary: 上传图片
+      description: |
+        上传文章/项目配图。安全措施：
+        - 服务端 MIME 类型检测（不相信扩展名）
+        - 随机文件名（UUID），禁止用户控制路径
+        - 图片重新编码（去除元数据，防止恶意文件）
+        - 最大 5MB，支持 jpg/png/webp/gif
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: 图片文件
+      responses:
+        '200':
+          description: 上传成功
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          url:
+                            type: string
+                            format: uri
+                            description: 图片访问 URL
+                          filename:
+                            type: string
+                          size:
+                            type: integer
+                            description: 文件大小（字节）
+                          width:
+                            type: integer
+                          height:
+                            type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '413':
+          description: 文件过大（超过 5MB）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ==================== Health ====================
+  /healthz:
+    servers:
+      - url: https://example.com
+        description: 生产环境根路径
+      - url: http://localhost:8080
+        description: 本地开发根路径
+    get:
+      operationId: getHealth
+      tags: [Site]
+      summary: 存活检查
+      description: 仅检查进程是否存活，不依赖外部服务。用于 Docker healthcheck 和负载均衡。
+      responses:
+        '200':
+          description: 服务存活
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /readyz:
+    servers:
+      - url: https://example.com
+        description: 生产环境根路径
+      - url: http://localhost:8080
+        description: 本地开发根路径
+    get:
+      operationId: getReady
+      tags: [Site]
+      summary: 就绪检查
+      description: 检查数据库连接是否正常。用于部署后流量切入前的就绪探测。
+      responses:
+        '200':
+          description: 服务就绪
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ready
+                  database:
+                    type: string
+                    example: connected
+        '503':
+          description: 服务未就绪（数据库不可用）
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: not_ready
+                  database:
+                    type: string
+                    example: disconnected
+
+components:
+  # ==================== Security Schemes ====================
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Access Token，格式：Bearer {token}。前端存内存，15分钟过期。
+    RefreshCookie:
+      type: apiKey
+      in: cookie
+      name: refresh_token
+      description: "HttpOnly Refresh Token Cookie。由浏览器自动发送，前端请求必须携带 credentials: include。"
+
+  # ==================== Parameters ====================
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      description: 页码（从 1 开始）
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    PageSizeParam:
+      name: page_size
+      in: query
+      description: 每页数量
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+
+  # ==================== Responses ====================
+  responses:
+    Success:
+      description: 操作成功
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ApiResponse'
+    BadRequest:
+      description: 请求参数错误
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Unauthorized:
+      description: 未认证或 Token 过期
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: 无权限（角色不足）
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    NotFound:
+      description: 资源不存在
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Conflict:
+      description: 资源冲突（重复创建/状态不允许）
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    TooManyRequests:
+      description: 请求过于频繁（限流）
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  # ==================== Schemas ====================
+  schemas:
+    # --- 通用 ---
+    ApiResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          description: 状态码，0 表示成功
+          example: 0
+        message:
+          type: string
+          example: success
+        data:
+          description: 响应数据（任意类型）
+
+    ErrorResponse:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: integer
+          example: 40001
+        message:
+          type: string
+          example: 参数校验失败
+        data:
+          type: object
+          nullable: true
+          description: 附加错误详情（如字段级校验错误）
+
+    Pagination:
+      type: object
+      required: [page, page_size, total, total_pages]
+      properties:
+        page:
+          type: integer
+          example: 1
+        page_size:
+          type: integer
+          example: 10
+        total:
+          type: integer
+          example: 100
+        total_pages:
+          type: integer
+          example: 10
+
+    # --- Auth ---
+    LoginRequest:
+      type: object
+      additionalProperties: false
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          maxLength: 50
+          example: admin
+        password:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 100
+
+    AccessToken:
+      type: object
+      required: [access_token, token_type, expires_in]
+      properties:
+        access_token:
+          type: string
+          description: JWT Access Token（15分钟有效，前端存内存）
+        token_type:
+          type: string
+          example: Bearer
+        expires_in:
+          type: integer
+          description: 有效期（秒）
+          example: 900
+
+    User:
+      type: object
+      required: [id, username, nickname, email, avatar_url, bio, role, created_at]
+      properties:
+        id:
+          type: integer
+          format: int64
+        username:
+          type: string
+        nickname:
+          type: string
+        email:
+          type: string
+          nullable: true
+        avatar_url:
+          type: string
+          nullable: true
+        bio:
+          type: string
+          nullable: true
+        role:
+          type: string
+          enum: [admin, editor]
+        created_at:
+          type: string
+          format: date-time
+
+    # --- Article ---
+    Article:
+      type: object
+      required: [id, slug, title, summary, cover_image, category, tags, author, status, is_top, view_count, like_count, comment_count, published_at, created_at, updated_at]
+      properties:
+        id:
+          type: integer
+          format: int64
+        slug:
+          type: string
+        title:
+          type: string
+        summary:
+          type: string
+        cover_image:
+          type: string
+          nullable: true
+        category:
+          nullable: true
+          allOf:
+            - $ref: '#/components/schemas/Category'
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tag'
+        author:
+          $ref: '#/components/schemas/User'
+        status:
+          type: string
+          enum: [draft, published, archived]
+        is_top:
+          type: boolean
+        view_count:
+          type: integer
+        like_count:
+          type: integer
+        comment_count:
+          type: integer
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ArticleDetail:
+      allOf:
+        - $ref: '#/components/schemas/Article'
+        - type: object
+          required: [content]
+          properties:
+            content:
+              type: string
+              description: Markdown 正文
+
+    ArticleCreateRequest:
+      type: object
+      additionalProperties: false
+      required: [title, content]
+      properties:
+        title:
+          type: string
+          maxLength: 300
+        slug:
+          type: string
+          maxLength: 200
+          description: 不填则自动从标题生成
+        summary:
+          type: string
+          maxLength: 500
+          description: 不填则自动截取正文
+        content:
+          type: string
+        cover_image:
+          type: string
+          nullable: true
+        category_id:
+          type: integer
+          format: int64
+          nullable: true
+        tag_ids:
+          type: array
+          items:
+            type: integer
+            format: int64
+        status:
+          type: string
+          enum: [draft, published]
+          default: draft
+        is_top:
+          type: boolean
+          default: false
+
+    ArticleUpdateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        title:
+          type: string
+          maxLength: 300
+        slug:
+          type: string
+          maxLength: 200
+        summary:
+          type: string
+          maxLength: 500
+        content:
+          type: string
+        cover_image:
+          type: string
+          nullable: true
+        category_id:
+          type: integer
+          format: int64
+          nullable: true
+        tag_ids:
+          type: array
+          items:
+            type: integer
+            format: int64
+        is_top:
+          type: boolean
+
+    ArticleListResponse:
+      type: object
+      required: [items, pagination]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Article'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    ArchiveGroup:
+      type: object
+      required: [year, months]
+      properties:
+        year:
+          type: integer
+          example: 2026
+        months:
+          type: array
+          items:
+            type: object
+            required: [month, articles]
+            properties:
+              month:
+                type: integer
+                example: 8
+              articles:
+                type: array
+                items:
+                  type: object
+                  required: [slug, title, published_at]
+                  properties:
+                    slug:
+                      type: string
+                    title:
+                      type: string
+                    published_at:
+                      type: string
+                      format: date-time
+
+    # --- Project ---
+    Project:
+      type: object
+      required: [id, slug, name, summary, cover_image, technologies, repository_url, demo_url, featured, sort_order, status, started_at, completed_at, created_at, updated_at]
+      properties:
+        id:
+          type: integer
+          format: int64
+        slug:
+          type: string
+        name:
+          type: string
+        summary:
+          type: string
+        cover_image:
+          type: string
+          nullable: true
+        technologies:
+          type: array
+          items:
+            type: string
+          description: 技术栈列表
+          example: ["Go", "React", "Docker"]
+        repository_url:
+          type: string
+          format: uri
+          nullable: true
+        demo_url:
+          type: string
+          format: uri
+          nullable: true
+        featured:
+          type: boolean
+        sort_order:
+          type: integer
+        status:
+          type: string
+          enum: [active, archived]
+        started_at:
+          type: string
+          format: date
+          nullable: true
+        completed_at:
+          type: string
+          format: date
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ProjectDetail:
+      allOf:
+        - $ref: '#/components/schemas/Project'
+        - type: object
+          required: [content]
+          properties:
+            content:
+              type: string
+              description: Markdown 详细描述
+
+    ProjectCreateRequest:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        slug:
+          type: string
+          maxLength: 200
+          description: 不填则自动生成
+        summary:
+          type: string
+          maxLength: 500
+        content:
+          type: string
+          description: Markdown 详细描述
+        cover_image:
+          type: string
+          nullable: true
+        technologies:
+          type: array
+          items:
+            type: string
+        repository_url:
+          type: string
+          format: uri
+          nullable: true
+        demo_url:
+          type: string
+          format: uri
+          nullable: true
+        featured:
+          type: boolean
+          default: false
+        sort_order:
+          type: integer
+          default: 0
+        status:
+          type: string
+          enum: [active, archived]
+          default: active
+        started_at:
+          type: string
+          format: date
+          nullable: true
+        completed_at:
+          type: string
+          format: date
+          nullable: true
+
+    ProjectUpdateRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        slug:
+          type: string
+          maxLength: 200
+        summary:
+          type: string
+          maxLength: 500
+        content:
+          type: string
+        cover_image:
+          type: string
+          nullable: true
+        technologies:
+          type: array
+          items:
+            type: string
+        repository_url:
+          type: string
+          format: uri
+          nullable: true
+        demo_url:
+          type: string
+          format: uri
+          nullable: true
+        featured:
+          type: boolean
+        sort_order:
+          type: integer
+        status:
+          type: string
+          enum: [active, archived]
+        started_at:
+          type: string
+          format: date
+          nullable: true
+        completed_at:
+          type: string
+          format: date
+          nullable: true
+
+    ProjectListResponse:
+      type: object
+      required: [items, pagination]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Project'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # --- Category ---
+    Category:
+      type: object
+      required: [id, slug, name, description, parent_id, icon, sort_order, article_count, created_at]
+      properties:
+        id:
+          type: integer
+          format: int64
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        parent_id:
+          type: integer
+          format: int64
+          nullable: true
+        icon:
+          type: string
+          nullable: true
+        sort_order:
+          type: integer
+        article_count:
+          type: integer
+          description: 该分类下已发布文章数
+        created_at:
+          type: string
+          format: date-time
+
+    CategoryRequest:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        slug:
+          type: string
+          maxLength: 100
+          description: 不填则自动生成
+        description:
+          type: string
+          maxLength: 500
+        parent_id:
+          type: integer
+          format: int64
+          nullable: true
+        icon:
+          type: string
+          maxLength: 100
+        sort_order:
+          type: integer
+          default: 0
+
+    # --- Tag ---
+    Tag:
+      type: object
+      required: [id, slug, name, color, article_count, created_at]
+      properties:
+        id:
+          type: integer
+          format: int64
+        slug:
+          type: string
+        name:
+          type: string
+        color:
+          type: string
+          nullable: true
+          description: 十六进制颜色
+          example: "#3B82F6"
+        article_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+
+    TagRequest:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        slug:
+          type: string
+          maxLength: 100
+        color:
+          type: string
+          maxLength: 20
+          example: "#3B82F6"
+
+    # --- Comment ---
+    Comment:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        article_id:
+          type: integer
+          format: int64
+        parent_id:
+          type: integer
+          format: int64
+          nullable: true
+          description: 父评论 ID（回复时填写，最多两层）
+        nickname:
+          type: string
+        website:
+          type: string
+          nullable: true
+        content:
+          type: string
+          description: 已清洗的评论内容
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        created_at:
+          type: string
+          format: date-time
+
+    CommentNode:
+      allOf:
+        - $ref: '#/components/schemas/Comment'
+        - type: object
+          properties:
+            replies:
+              type: array
+              items:
+                $ref: '#/components/schemas/Comment'
+              description: 回复列表（第二层，不再递归）
+
+    CommentCreateRequest:
+      type: object
+      additionalProperties: false
+      required: [nickname, content]
+      properties:
+        nickname:
+          type: string
+          maxLength: 100
+        email:
+          type: string
+          format: email
+          maxLength: 255
+          description: 不公开，用于回复通知
+        website:
+          type: string
+          maxLength: 500
+          nullable: true
+        content:
+          type: string
+          maxLength: 2000
+          description: 评论内容（纯文本或受限 Markdown，存储前清洗）
+        parent_id:
+          type: integer
+          format: int64
+          nullable: true
+          description: 回复的父评论 ID（必须是一级评论）
+        website_url:
+          type: string
+          description: Honeypot 隐藏字段，正常用户留空。填写则视为垃圾评论。
+          nullable: true
+
+    CommentListResponse:
+      type: object
+      required: [items, pagination]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CommentNode'
+          description: 一级评论列表，每个包含 replies
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # --- Like ---
+    LikeStatus:
+      type: object
+      required: [like_count, liked]
+      properties:
+        like_count:
+          type: integer
+          description: 点赞总数
+        liked:
+          type: boolean
+          description: 当前访客是否已点赞
+
+    LikeRequest:
+      type: object
+      additionalProperties: false
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [like, unlike]
+          description: 点赞或取消
+
+    # --- Dashboard ---
+    DashboardStats:
+      type: object
+      properties:
+        total_articles:
+          type: integer
+        published_articles:
+          type: integer
+        draft_articles:
+          type: integer
+        total_projects:
+          type: integer
+        total_views:
+          type: integer
+        total_likes:
+          type: integer
+        total_comments:
+          type: integer
+        pending_comments:
+          type: integer
+        total_categories:
+          type: integer
+        total_tags:
+          type: integer
+        recent_articles:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              title:
+                type: string
+              slug:
+                type: string
+              status:
+                type: string
+              published_at:
+                type: string
+                format: date-time
+        popular_articles:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              title:
+                type: string
+              slug:
+                type: string
+              view_count:
+                type: integer
+
+    PublicStats:
+      type: object
+      required: [total_articles, total_projects, total_categories, total_tags]
+      properties:
+        total_articles:
+          type: integer
+          description: 已发布文章数
+        total_projects:
+          type: integer
+          description: active 项目数
+        total_categories:
+          type: integer
+        total_tags:
+          type: integer
+
+    # --- Site Settings ---
+    SiteSettings:
+      type: object
+      required: [site_title, site_description, site_keywords, footer_text, icp_number, about_content, social_links]
+      properties:
+        site_title:
+          type: string
+          example: "我的技术博客"
+        site_description:
+          type: string
+          example: "分享计算机技术与生活感悟"
+        site_keywords:
+          type: string
+        footer_text:
+          type: string
+        icp_number:
+          type: string
+          nullable: true
+        about_content:
+          type: string
+          description: 关于页内容（Markdown）
+        social_links:
+          type: array
+          items:
+            type: object
+            required: [name, url, icon]
+            properties:
+              name:
+                type: string
+                example: "GitHub"
+              url:
+                type: string
+                format: uri
+                example: "https://github.com/yourname"
+              icon:
+                type: string
