@@ -39,3 +39,4 @@ backups/
 # Temporary files
 *.tmp
 *.swp
+docs/taskbook/
