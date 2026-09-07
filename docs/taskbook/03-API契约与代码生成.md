@@ -246,49 +246,49 @@ PS> .\scripts\check-generated.ps1
 打开 `.github/workflows/ci.yml`，在 `jobs:` 下、现有 `repository:` Job 同级追加以下完整 Job。注意 `contract:` 前有两个空格：
 
 ```yaml
-  contract:
-    name: Contract checks
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v5
+contract:
+  name: Contract checks
+  runs-on: ubuntu-latest
+  timeout-minutes: 15
+  steps:
+    - name: Check out repository
+      uses: actions/checkout@v5
 
-      - name: Lint OpenAPI
-        uses: docker://dshanley/vacuum:0.30.0
-        with:
-          args: lint /github/workspace/docs/api/openapi.yaml
+    - name: Lint OpenAPI
+      uses: docker://dshanley/vacuum:0.30.0
+      with:
+        args: lint /github/workspace/docs/api/openapi.yaml
 
-      - name: Set up Go
-        uses: actions/setup-go@v6
-        with:
-          go-version-file: server/go.mod
-          cache-dependency-path: server/go.sum
+    - name: Set up Go
+      uses: actions/setup-go@v6
+      with:
+        go-version-file: server/go.mod
+        cache-dependency-path: server/go.sum
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version-file: .node-version
+    - name: Set up Node.js
+      uses: actions/setup-node@v5
+      with:
+        node-version-file: .node-version
 
-      - name: Install pnpm
-        run: corepack install --global pnpm@11.19.0
+    - name: Install pnpm
+      run: corepack install --global pnpm@11.19.0
 
-      - name: Install workspace dependencies
-        run: pnpm install --frozen-lockfile
+    - name: Install workspace dependencies
+      run: pnpm install --frozen-lockfile
 
-      - name: Download Go modules
-        working-directory: server
-        run: go mod download
+    - name: Download Go modules
+      working-directory: server
+      run: go mod download
 
-      - name: Generate Go contract
-        working-directory: server
-        run: go generate ./...
+    - name: Generate Go contract
+      working-directory: server
+      run: go generate ./...
 
-      - name: Generate TypeScript contract
-        run: pnpm exec openapi-typescript docs/api/openapi.yaml --output web/types/openapi.d.ts
+    - name: Generate TypeScript contract
+      run: pnpm exec openapi-typescript docs/api/openapi.yaml --output web/types/openapi.d.ts
 
-      - name: Fail on generated drift
-        run: git diff --exit-code -- server/generated/oapi/api.gen.go web/types/openapi.d.ts
+    - name: Fail on generated drift
+      run: git diff --exit-code -- server/generated/oapi/api.gen.go web/types/openapi.d.ts
 ```
 
 YAML 不允许 Tab。保存后运行 Prettier：

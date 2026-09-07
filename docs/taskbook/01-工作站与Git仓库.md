@@ -41,15 +41,15 @@ PS> code --version
 
 基线成功值：
 
-| 工具 | 允许值 |
-|---|---|
-| PowerShell | `7.x` |
-| Git | `2.51.x` 或更高兼容版本 |
-| Node.js | `v24.14.0` |
-| Corepack | `0.34.x` |
-| Go | `go1.25.3 windows/amd64` |
-| Docker | Engine 29.x，Compose v5.x |
-| VS Code | 1.100 或更新稳定版 |
+| 工具       | 允许值                    |
+| ---------- | ------------------------- |
+| PowerShell | `7.x`                     |
+| Git        | `2.51.x` 或更高兼容版本   |
+| Node.js    | `v24.14.0`                |
+| Corepack   | `0.34.x`                  |
+| Go         | `go1.25.3 windows/amd64`  |
+| Docker     | Engine 29.x，Compose v5.x |
+| VS Code    | 1.100 或更新稳定版        |
 
 如果命令存在且版本匹配，不重复安装。某一项缺失时只处理该项：
 
@@ -276,7 +276,7 @@ PS> git switch -c <任务书指定分支> #从main新建并切换到任务分支
 PS> git status --short #简短现实改动文件列表
 PS> git diff -- <任务书列出的路径> #查看指定路径工作区和缓存区之间改动
 PS> git diff --check #检查代码末尾空格,换行符异常
-PS> git add -- <任务书列出的路径> 
+PS> git add -- <任务书列出的路径>
 PS> git diff --cached #查看暂存区和上一次提交的变更
 PS> git commit -m '<任务书指定信息>'
 ```
@@ -290,7 +290,7 @@ PS> git push --set-upstream origin <分支名> #推送本地分支到远程仓�
 然后在 GitHub 创建 PR、逐文件自审、等待 CI、Squash and merge。合并后：
 
 ```powershell
-PS> git switch main 
+PS> git switch main
 PS> git pull --ff-only #拉取合并后的远程main分支更新,快进方式更新本地main
 PS> git branch -d <分支名> #安全删除本地任务分支
 PS> git fetch --prune #拉取远程分支信息,清理本地已经在远程被删除的分支引用

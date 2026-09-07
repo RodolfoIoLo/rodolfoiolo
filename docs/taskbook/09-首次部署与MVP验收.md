@@ -112,12 +112,12 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}']
       interval: 5s
       timeout: 3s
       retries: 20
     networks: [backend]
-    security_opt: ["no-new-privileges:true"]
+    security_opt: ['no-new-privileges:true']
 
   migrate:
     image: migrate/migrate:v4.19.0
@@ -155,7 +155,7 @@ services:
       REFRESH_COOKIE_NAME: ${REFRESH_COOKIE_NAME}
       VISITOR_COOKIE_NAME: ${VISITOR_COOKIE_NAME}
       VISITOR_SECRET_FILE: /run/secrets/visitor_secret.txt
-      COOKIE_SECURE: "true"
+      COOKIE_SECURE: 'true'
       UPLOAD_ROOT: /var/lib/personal-site/uploads
       MEDIA_PUBLIC_URL: https://${SITE_DOMAIN}/uploads
     volumes:
@@ -164,24 +164,24 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    expose: ["8080"]
+    expose: ['8080']
     healthcheck:
-      test: ["CMD", "/app/api", "--healthcheck"]
+      test: ['CMD', '/app/api', '--healthcheck']
       interval: 30s
       timeout: 3s
       retries: 3
       start_period: 10s
     networks: [backend]
-    security_opt: ["no-new-privileges:true"]
+    security_opt: ['no-new-privileges:true']
     read_only: true
-    tmpfs: ["/tmp:rw,noexec,nosuid,size=16m"]
+    tmpfs: ['/tmp:rw,noexec,nosuid,size=16m']
 
   nginx:
     image: nginx:1.28.0-alpine
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - '80:80'
+      - '443:443'
     volumes:
       - ./deploy/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./deploy/nginx/conf.d:/etc/nginx/templates:ro
@@ -195,7 +195,7 @@ services:
       api:
         condition: service_healthy
     networks: [backend]
-    security_opt: ["no-new-privileges:true"]
+    security_opt: ['no-new-privileges:true']
 
   certbot:
     image: certbot/certbot:v4.0.0

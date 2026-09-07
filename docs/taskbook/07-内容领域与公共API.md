@@ -1,6 +1,5 @@
 # 第 07 章：内容领域与完整 API
 
-
 本章实现 OpenAPI 中除认证外的所有后端 operation，并在结尾首次注册 Strict Server。不能跳过资源，也不能保留 501。互动前端在第 12 章完成，但其后端契约本章就绪。
 
 ## 07-01 创建分支、目录和依赖
@@ -375,21 +374,21 @@ func (s *CommentSanitizer) Clean(value string) string {
 
 后续必须按这个顺序创建，任何一项不能以“同理”省略：
 
-| 顺序 | 文件 | 职责 |
-|---:|---|---|
-| 1 | `repository/category.go` | 分类 SQL 与父级约束 |
-| 2 | `repository/tag.go` | 标签 SQL 与公开计数 |
-| 3 | `repository/article.go` | 文章查询、标签事务和状态机持久化 |
-| 4 | `repository/project.go` | 项目查询与 JSONB 技术栈 |
-| 5 | `repository/site.go` | 设置、统计、RSS/Sitemap 数据 |
-| 6 | `repository/interaction.go` | 评论审核、点赞和计数事务 |
-| 7 | `repository/media.go` | 媒体元数据 |
-| 8 | `service/content.go` | 所有业务校验、权限和状态机 |
-| 9 | `handler/content.go` | OpenAPI DTO 映射 |
-| 10 | `handler/interaction.go` | 互动和媒体 DTO 映射 |
-| 11 | `handler/health_strict.go` | 契约内健康响应 |
-| 12 | `server/server.go` | 中间件顺序和 Strict 注册 |
-| 13 | `cmd/api/main.go` | 最终依赖装配 |
+| 顺序 | 文件                        | 职责                             |
+| ---: | --------------------------- | -------------------------------- |
+|    1 | `repository/category.go`    | 分类 SQL 与父级约束              |
+|    2 | `repository/tag.go`         | 标签 SQL 与公开计数              |
+|    3 | `repository/article.go`     | 文章查询、标签事务和状态机持久化 |
+|    4 | `repository/project.go`     | 项目查询与 JSONB 技术栈          |
+|    5 | `repository/site.go`        | 设置、统计、RSS/Sitemap 数据     |
+|    6 | `repository/interaction.go` | 评论审核、点赞和计数事务         |
+|    7 | `repository/media.go`       | 媒体元数据                       |
+|    8 | `service/content.go`        | 所有业务校验、权限和状态机       |
+|    9 | `handler/content.go`        | OpenAPI DTO 映射                 |
+|   10 | `handler/interaction.go`    | 互动和媒体 DTO 映射              |
+|   11 | `handler/health_strict.go`  | 契约内健康响应                   |
+|   12 | `server/server.go`          | 中间件顺序和 Strict 注册         |
+|   13 | `cmd/api/main.go`           | 最终依赖装配                     |
 
 本章后续代码量较大，执行时每创建一个文件立即运行 `gofmt` 和对应包测试；不要先粘贴完所有文件再一起排错。
 

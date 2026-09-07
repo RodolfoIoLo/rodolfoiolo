@@ -14,14 +14,14 @@
 
 采用以下可重复工具链：
 
-| 工具 | 固定版本 | 固定位置 |
-|---|---:|---|
-| Node.js | `24.14.0` | 根目录 `.node-version`、CI |
-| pnpm | `11.19.0` | `web/package.json#packageManager`、Corepack、CI |
-| Next.js / create-next-app | `16.3.2` | 脚手架命令和 `web/package.json` |
-| Tailwind CSS | `4.3.3` | `web/package.json`；使用 CSS-first 配置 |
-| Go 语言版本 | `1.25.0` | `server/go.mod` 的 `go` 指令 |
-| Go 工具链 | `1.25.3` | `server/go.mod` 的 `toolchain` 指令、CI、Dockerfile |
+| 工具                      |  固定版本 | 固定位置                                            |
+| ------------------------- | --------: | --------------------------------------------------- |
+| Node.js                   | `24.14.0` | 根目录 `.node-version`、CI                          |
+| pnpm                      | `11.19.0` | `web/package.json#packageManager`、Corepack、CI     |
+| Next.js / create-next-app |  `16.3.2` | 脚手架命令和 `web/package.json`                     |
+| Tailwind CSS              |   `4.3.3` | `web/package.json`；使用 CSS-first 配置             |
+| Go 语言版本               |  `1.25.0` | `server/go.mod` 的 `go` 指令                        |
+| Go 工具链                 |  `1.25.3` | `server/go.mod` 的 `toolchain` 指令、CI、Dockerfile |
 
 说明：Go 的 `go` 指令表达代码使用的最低语言语义，`toolchain` 指令表达默认构建工具链。二者分开可以避免把“语言特性版本”和“带安全/缺陷修复的补丁工具链”混为一谈。
 

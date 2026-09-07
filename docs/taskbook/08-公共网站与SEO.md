@@ -153,9 +153,9 @@ export default [
     ignores: ['.next/**', 'out/**', 'coverage/**', 'next-env.d.ts', 'types/openapi.d.ts'],
     rules: {
       '@typescript-eslint/consistent-type-imports': 'error',
-      '@typescript-eslint/no-explicit-any': 'error'
-    }
-  }
+      '@typescript-eslint/no-explicit-any': 'error',
+    },
+  },
 ];
 ```
 
@@ -310,20 +310,83 @@ web/public/robots.txt
   }
 }
 
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
-body { margin: 0; min-height: 100vh; background: var(--page-bg); color: var(--text); font-family: var(--font-sans); line-height: 1.7; letter-spacing: 0; }
-a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 4px; }
-img { display: block; max-width: 100%; }
-button, input, textarea, select { font: inherit; }
-:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
-.glass { border: 1px solid var(--border); border-radius: 8px; background: var(--panel-bg); box-shadow: var(--shadow); backdrop-filter: blur(14px) saturate(120%); }
-.prose { max-width: 72ch; }
-.prose h2, .prose h3 { font-family: var(--font-display); line-height: 1.25; }
-.prose pre { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; background: #101714; color: #eef6ef; }
-.prose code { font-family: var(--font-mono); }
-.prose :not(pre) > code { border-radius: 4px; padding: 0.12rem 0.34rem; background: color-mix(in srgb, var(--text) 9%, transparent); }
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+}
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--page-bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  line-height: 1.7;
+  letter-spacing: 0;
+}
+a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+img {
+  display: block;
+  max-width: 100%;
+}
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+.glass {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(14px) saturate(120%);
+}
+.prose {
+  max-width: 72ch;
+}
+.prose h2,
+.prose h3 {
+  font-family: var(--font-display);
+  line-height: 1.25;
+}
+.prose pre {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  background: #101714;
+  color: #eef6ef;
+}
+.prose code {
+  font-family: var(--font-mono);
+}
+.prose :not(pre) > code {
+  border-radius: 4px;
+  padding: 0.12rem 0.34rem;
+  background: color-mix(in srgb, var(--text) 9%, transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
 ```
 
 颜色不由单一紫/蓝色统治；绿色、天空蓝和珊瑚色只作功能强调。固定面板圆角不超过 8px。
@@ -342,13 +405,23 @@ export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: { default: site.name, template: `%s | ${site.name}` },
   description: site.description,
-  openGraph: { type: 'website', siteName: site.name, title: site.name, description: site.description, url: site.url },
+  openGraph: {
+    type: 'website',
+    siteName: site.name,
+    title: site.name,
+    description: site.description,
+    url: site.url,
+  },
   twitter: { card: 'summary_large_image', title: site.name, description: site.description },
   alternates: { types: { 'application/rss+xml': `${site.url}/rss.xml` } },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
-  return <html lang="zh-CN"><body>{children}</body></html>;
+  return (
+    <html lang="zh-CN">
+      <body>{children}</body>
+    </html>
+  );
 }
 ```
 
@@ -358,7 +431,15 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
 
 ```tsx
 import type { ReactNode } from 'react';
-export function Container({ children, className = '' }: { children: ReactNode; className?: string }) { return <div className={`mx-auto w-full max-w-6xl px-5 sm:px-8 ${className}`}>{children}</div>; }
+export function Container({
+  children,
+  className = '',
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return <div className={`mx-auto w-full max-w-6xl px-5 sm:px-8 ${className}`}>{children}</div>;
+}
 ```
 
 创建 `web/components/ui/button-link.tsx`：
@@ -366,14 +447,40 @@ export function Container({ children, className = '' }: { children: ReactNode; c
 ```tsx
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-export function ButtonLink({ href, children, secondary = false }: { href: string; children: ReactNode; secondary?: boolean }) { const color = secondary ? 'border-[var(--border)] bg-[var(--panel-bg)]' : 'border-moss bg-moss text-white'; return <Link className={`inline-flex min-h-11 items-center justify-center border px-4 py-2 font-medium no-underline transition hover:-translate-y-0.5 ${color}`} href={href}>{children}</Link>; }
+export function ButtonLink({
+  href,
+  children,
+  secondary = false,
+}: {
+  href: string;
+  children: ReactNode;
+  secondary?: boolean;
+}) {
+  const color = secondary
+    ? 'border-[var(--border)] bg-[var(--panel-bg)]'
+    : 'border-moss bg-moss text-white';
+  return (
+    <Link
+      className={`inline-flex min-h-11 items-center justify-center border px-4 py-2 font-medium no-underline transition hover:-translate-y-0.5 ${color}`}
+      href={href}
+    >
+      {children}
+    </Link>
+  );
+}
 ```
 
 创建 `web/components/ui/tag.tsx`：
 
 ```tsx
 import type { ReactNode } from 'react';
-export function Tag({ children }: { children: ReactNode }) { return <span className="inline-flex items-center border border-[var(--border)] bg-[var(--panel-bg)] px-2 py-1 text-xs text-[var(--text-muted)]">{children}</span>; }
+export function Tag({ children }: { children: ReactNode }) {
+  return (
+    <span className="inline-flex items-center border border-[var(--border)] bg-[var(--panel-bg)] px-2 py-1 text-xs text-[var(--text-muted)]">
+      {children}
+    </span>
+  );
+}
 ```
 
 ## 08-10 创建 Header 和 Footer
@@ -383,8 +490,32 @@ export function Tag({ children }: { children: ReactNode }) { return <span classN
 ```tsx
 import Link from 'next/link';
 import { Container } from '@/components/ui/container';
-const links = [['文章', '/articles/'], ['项目', '/projects/'], ['归档', '/archive/'], ['关于', '/about/']] as const;
-export function Header() { return <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-[color-mix(in_srgb,var(--page-bg)_86%,transparent)] backdrop-blur-xl"><Container className="flex min-h-16 items-center justify-between gap-6"><Link className="font-display text-lg font-semibold no-underline" href="/">Rodolfo Iolo</Link><nav aria-label="主导航"><ul className="flex flex-wrap items-center justify-end gap-x-5 gap-y-2 text-sm">{links.map(([label, href]) => <li key={href}><Link href={href}>{label}</Link></li>)}</ul></nav></Container></header>; }
+const links = [
+  ['文章', '/articles/'],
+  ['项目', '/projects/'],
+  ['归档', '/archive/'],
+  ['关于', '/about/'],
+] as const;
+export function Header() {
+  return (
+    <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-[color-mix(in_srgb,var(--page-bg)_86%,transparent)] backdrop-blur-xl">
+      <Container className="flex min-h-16 items-center justify-between gap-6">
+        <Link className="font-display text-lg font-semibold no-underline" href="/">
+          Rodolfo Iolo
+        </Link>
+        <nav aria-label="主导航">
+          <ul className="flex flex-wrap items-center justify-end gap-x-5 gap-y-2 text-sm">
+            {links.map(([label, href]) => (
+              <li key={href}>
+                <Link href={href}>{label}</Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </Container>
+    </header>
+  );
+}
 ```
 
 创建 `web/components/layout/footer.tsx`：
@@ -392,7 +523,18 @@ export function Header() { return <header className="sticky top-0 z-40 border-b 
 ```tsx
 import { Container } from '@/components/ui/container';
 import type { SiteSettings } from '@/lib/types';
-export function Footer({ settings }: { settings: SiteSettings }) { return <footer className="border-t border-[var(--border)] py-10 text-sm text-[var(--text-muted)]"><Container className="flex flex-wrap items-center justify-between gap-4"><p>{settings.footer_text}</p><p>© {new Date().getUTCFullYear()} {settings.site_title}</p></Container></footer>; }
+export function Footer({ settings }: { settings: SiteSettings }) {
+  return (
+    <footer className="border-t border-[var(--border)] py-10 text-sm text-[var(--text-muted)]">
+      <Container className="flex flex-wrap items-center justify-between gap-4">
+        <p>{settings.footer_text}</p>
+        <p>
+          © {new Date().getUTCFullYear()} {settings.site_title}
+        </p>
+      </Container>
+    </footer>
+  );
+}
 ```
 
 创建 `web/app/(public)/layout.tsx`：
@@ -402,7 +544,16 @@ import type { ReactNode } from 'react';
 import { Footer } from '@/components/layout/footer';
 import { Header } from '@/components/layout/header';
 import { api } from '@/lib/api';
-export default async function PublicLayout({ children }: { children: ReactNode }) { const settings = await api.settings(); return <><Header />{children}<Footer settings={settings} /></>; }
+export default async function PublicLayout({ children }: { children: ReactNode }) {
+  const settings = await api.settings();
+  return (
+    <>
+      <Header />
+      {children}
+      <Footer settings={settings} />
+    </>
+  );
+}
 ```
 
 ## 08-11 创建内容卡片和 Markdown
@@ -413,7 +564,32 @@ export default async function PublicLayout({ children }: { children: ReactNode }
 import Link from 'next/link';
 import { Tag } from '@/components/ui/tag';
 import type { Article } from '@/lib/types';
-export function ArticleCard({ article }: { article: Article }) { return <article className="glass grid min-h-52 content-between gap-5 p-5 transition hover:-translate-y-1"><div><p className="text-sm text-[var(--text-muted)]">{article.published_at ? new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium' }).format(new Date(article.published_at)) : '未发布'}</p><h2 className="mt-2 font-display text-2xl font-semibold"><Link href={`/articles/${article.slug}/`}>{article.title}</Link></h2><p className="mt-3 text-[var(--text-muted)]">{article.summary}</p></div><ul className="flex flex-wrap gap-2" aria-label="文章标签">{article.tags.map((tag) => <li key={tag.id}><Tag>{tag.name}</Tag></li>)}</ul></article>; }
+export function ArticleCard({ article }: { article: Article }) {
+  return (
+    <article className="glass grid min-h-52 content-between gap-5 p-5 transition hover:-translate-y-1">
+      <div>
+        <p className="text-sm text-[var(--text-muted)]">
+          {article.published_at
+            ? new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium' }).format(
+                new Date(article.published_at),
+              )
+            : '未发布'}
+        </p>
+        <h2 className="mt-2 font-display text-2xl font-semibold">
+          <Link href={`/articles/${article.slug}/`}>{article.title}</Link>
+        </h2>
+        <p className="mt-3 text-[var(--text-muted)]">{article.summary}</p>
+      </div>
+      <ul className="flex flex-wrap gap-2" aria-label="文章标签">
+        {article.tags.map((tag) => (
+          <li key={tag.id}>
+            <Tag>{tag.name}</Tag>
+          </li>
+        ))}
+      </ul>
+    </article>
+  );
+}
 ```
 
 创建 `web/components/cards/project-card.tsx`：
@@ -422,7 +598,26 @@ export function ArticleCard({ article }: { article: Article }) { return <article
 import Link from 'next/link';
 import { Tag } from '@/components/ui/tag';
 import type { Project } from '@/lib/types';
-export function ProjectCard({ project }: { project: Project }) { return <article className="glass grid min-h-64 content-between gap-5 p-5 transition hover:-translate-y-1"><div><p className="text-sm font-medium text-coral">{project.featured ? '精选项目' : '项目'}</p><h2 className="mt-2 font-display text-2xl font-semibold"><Link href={`/projects/${project.slug}/`}>{project.name}</Link></h2><p className="mt-3 text-[var(--text-muted)]">{project.summary}</p></div><ul className="flex flex-wrap gap-2" aria-label="技术栈">{project.technologies.map((technology) => <li key={technology}><Tag>{technology}</Tag></li>)}</ul></article>; }
+export function ProjectCard({ project }: { project: Project }) {
+  return (
+    <article className="glass grid min-h-64 content-between gap-5 p-5 transition hover:-translate-y-1">
+      <div>
+        <p className="text-sm font-medium text-coral">{project.featured ? '精选项目' : '项目'}</p>
+        <h2 className="mt-2 font-display text-2xl font-semibold">
+          <Link href={`/projects/${project.slug}/`}>{project.name}</Link>
+        </h2>
+        <p className="mt-3 text-[var(--text-muted)]">{project.summary}</p>
+      </div>
+      <ul className="flex flex-wrap gap-2" aria-label="技术栈">
+        {project.technologies.map((technology) => (
+          <li key={technology}>
+            <Tag>{technology}</Tag>
+          </li>
+        ))}
+      </ul>
+    </article>
+  );
+}
 ```
 
 创建 `web/components/markdown/markdown-content.tsx`：
@@ -431,7 +626,15 @@ export function ProjectCard({ project }: { project: Project }) { return <article
 import ReactMarkdown from 'react-markdown';
 import rehypeSanitize from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
-export function MarkdownContent({ source }: { source: string }) { return <div className="prose"><ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>{source}</ReactMarkdown></div>; }
+export function MarkdownContent({ source }: { source: string }) {
+  return (
+    <div className="prose">
+      <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeSanitize]}>
+        {source}
+      </ReactMarkdown>
+    </div>
+  );
+}
 ```
 
 Markdown 默认不允许原始 HTML；`rehype-sanitize` 是第二道防线。
@@ -448,8 +651,78 @@ import { Container } from '@/components/ui/container';
 import { api } from '@/lib/api';
 
 export default async function HomePage() {
-  const [articles, projects, stats] = await Promise.all([api.articles(3), api.projects(3), api.stats()]);
-  return <main><section className="flex min-h-[72vh] items-center border-b border-[var(--border)] py-20"><Container><p className="font-medium text-moss">计算机专业学生 · 独立开发者</p><h1 className="mt-4 max-w-4xl font-display text-5xl font-semibold leading-tight sm:text-6xl">Rodolfo Iolo</h1><p className="mt-6 max-w-2xl text-lg text-[var(--text-muted)]">记录软件工程实践、项目复盘，以及把想法从空仓库推进到生产环境的全过程。</p><div className="mt-8 flex flex-wrap gap-3"><ButtonLink href="/projects/">查看项目</ButtonLink><ButtonLink href="/articles/" secondary>阅读文章</ButtonLink></div><dl className="mt-12 grid max-w-2xl grid-cols-2 gap-4 sm:grid-cols-4">{[['文章', stats.total_articles], ['项目', stats.total_projects], ['分类', stats.total_categories], ['标签', stats.total_tags]].map(([label, value]) => <div key={label} className="border-l-2 border-moss pl-3"><dt className="text-sm text-[var(--text-muted)]">{label}</dt><dd className="m-0 font-display text-2xl font-semibold">{value}</dd></div>)}</dl></Container></section><section className="py-20"><Container><div className="flex items-end justify-between gap-4"><div><p className="text-sm text-coral">Writing</p><h2 className="font-display text-3xl font-semibold">最新文章</h2></div><a href="/articles/">全部文章</a></div><div className="mt-8 grid gap-5 lg:grid-cols-3">{articles.items.length ? articles.items.map((article) => <ArticleCard key={article.id} article={article} />) : <p>文章正在准备中。</p>}</div></Container></section><section className="border-t border-[var(--border)] py-20"><Container><div><p className="text-sm text-sky">Selected work</p><h2 className="font-display text-3xl font-semibold">项目实践</h2></div><div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">{projects.items.length ? projects.items.map((project) => <ProjectCard key={project.id} project={project} />) : <p>项目正在整理中。</p>}</div></Container></section></main>;
+  const [articles, projects, stats] = await Promise.all([
+    api.articles(3),
+    api.projects(3),
+    api.stats(),
+  ]);
+  return (
+    <main>
+      <section className="flex min-h-[72vh] items-center border-b border-[var(--border)] py-20">
+        <Container>
+          <p className="font-medium text-moss">计算机专业学生 · 独立开发者</p>
+          <h1 className="mt-4 max-w-4xl font-display text-5xl font-semibold leading-tight sm:text-6xl">
+            Rodolfo Iolo
+          </h1>
+          <p className="mt-6 max-w-2xl text-lg text-[var(--text-muted)]">
+            记录软件工程实践、项目复盘，以及把想法从空仓库推进到生产环境的全过程。
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <ButtonLink href="/projects/">查看项目</ButtonLink>
+            <ButtonLink href="/articles/" secondary>
+              阅读文章
+            </ButtonLink>
+          </div>
+          <dl className="mt-12 grid max-w-2xl grid-cols-2 gap-4 sm:grid-cols-4">
+            {[
+              ['文章', stats.total_articles],
+              ['项目', stats.total_projects],
+              ['分类', stats.total_categories],
+              ['标签', stats.total_tags],
+            ].map(([label, value]) => (
+              <div key={label} className="border-l-2 border-moss pl-3">
+                <dt className="text-sm text-[var(--text-muted)]">{label}</dt>
+                <dd className="m-0 font-display text-2xl font-semibold">{value}</dd>
+              </div>
+            ))}
+          </dl>
+        </Container>
+      </section>
+      <section className="py-20">
+        <Container>
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <p className="text-sm text-coral">Writing</p>
+              <h2 className="font-display text-3xl font-semibold">最新文章</h2>
+            </div>
+            <a href="/articles/">全部文章</a>
+          </div>
+          <div className="mt-8 grid gap-5 lg:grid-cols-3">
+            {articles.items.length ? (
+              articles.items.map((article) => <ArticleCard key={article.id} article={article} />)
+            ) : (
+              <p>文章正在准备中。</p>
+            )}
+          </div>
+        </Container>
+      </section>
+      <section className="border-t border-[var(--border)] py-20">
+        <Container>
+          <div>
+            <p className="text-sm text-sky">Selected work</p>
+            <h2 className="font-display text-3xl font-semibold">项目实践</h2>
+          </div>
+          <div className="mt-8 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {projects.items.length ? (
+              projects.items.map((project) => <ProjectCard key={project.id} project={project} />)
+            ) : (
+              <p>项目正在整理中。</p>
+            )}
+          </div>
+        </Container>
+      </section>
+    </main>
+  );
 }
 ```
 
@@ -465,8 +738,28 @@ import { ArticleCard } from '@/components/cards/article-card';
 import { Container } from '@/components/ui/container';
 import { api } from '@/lib/api';
 
-export const metadata: Metadata = { title: '文章', description: '软件工程、计算机科学与项目复盘文章。' };
-export default async function ArticlesPage() { const page = await api.articles(100); return <main className="py-16"><Container><h1 className="font-display text-4xl font-semibold">文章</h1><p className="mt-3 text-[var(--text-muted)]">按时间记录问题、取舍和验证过程。</p><div className="mt-10 grid gap-5 md:grid-cols-2">{page.items.length ? page.items.map((article) => <ArticleCard key={article.id} article={article} />) : <p>还没有已发布文章。</p>}</div></Container></main>; }
+export const metadata: Metadata = {
+  title: '文章',
+  description: '软件工程、计算机科学与项目复盘文章。',
+};
+export default async function ArticlesPage() {
+  const page = await api.articles(100);
+  return (
+    <main className="py-16">
+      <Container>
+        <h1 className="font-display text-4xl font-semibold">文章</h1>
+        <p className="mt-3 text-[var(--text-muted)]">按时间记录问题、取舍和验证过程。</p>
+        <div className="mt-10 grid gap-5 md:grid-cols-2">
+          {page.items.length ? (
+            page.items.map((article) => <ArticleCard key={article.id} article={article} />)
+          ) : (
+            <p>还没有已发布文章。</p>
+          )}
+        </div>
+      </Container>
+    </main>
+  );
+}
 ```
 
 创建 `web/app/(public)/articles/[slug]/page.tsx`：
@@ -481,9 +774,86 @@ import { api } from '@/lib/api';
 import { site } from '@/lib/site';
 
 type Props = { params: Promise<{ slug: string }> };
-export async function generateStaticParams() { const page = await api.articles(100); return page.items.map(({ slug }) => ({ slug })); }
-export async function generateMetadata({ params }: Props): Promise<Metadata> { const { slug } = await params; try { const article = await api.article(slug); return { title: article.title, description: article.summary, alternates: { canonical: `/articles/${article.slug}/` }, openGraph: { type: 'article', title: article.title, description: article.summary, publishedTime: article.published_at ?? undefined, modifiedTime: article.updated_at } }; } catch { return { title: '文章不存在' }; } }
-export default async function ArticlePage({ params }: Props) { const { slug } = await params; let article; try { article = await api.article(slug); } catch { notFound(); } const structured = { '@context': 'https://schema.org', '@type': 'Article', headline: article.title, description: article.summary, datePublished: article.published_at, dateModified: article.updated_at, author: { '@type': 'Person', name: article.author.nickname }, mainEntityOfPage: `${site.url}/articles/${article.slug}/` }; return <main className="py-16"><Container className="max-w-4xl"><article><header className="border-b border-[var(--border)] pb-8"><p className="text-sm text-[var(--text-muted)]">{article.published_at ? new Intl.DateTimeFormat('zh-CN', { dateStyle: 'long' }).format(new Date(article.published_at)) : ''}</p><h1 className="mt-3 font-display text-4xl font-semibold leading-tight sm:text-5xl">{article.title}</h1><p className="mt-5 text-lg text-[var(--text-muted)]">{article.summary}</p><ul className="mt-5 flex flex-wrap gap-2">{article.tags.map((tag) => <li key={tag.id}><Tag>{tag.name}</Tag></li>)}</ul></header><div className="mt-10"><MarkdownContent source={article.content} /></div></article><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structured).replaceAll('<', '\\u003c') }} /></Container></main>; }
+export async function generateStaticParams() {
+  const page = await api.articles(100);
+  return page.items.map(({ slug }) => ({ slug }));
+}
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  try {
+    const article = await api.article(slug);
+    return {
+      title: article.title,
+      description: article.summary,
+      alternates: { canonical: `/articles/${article.slug}/` },
+      openGraph: {
+        type: 'article',
+        title: article.title,
+        description: article.summary,
+        publishedTime: article.published_at ?? undefined,
+        modifiedTime: article.updated_at,
+      },
+    };
+  } catch {
+    return { title: '文章不存在' };
+  }
+}
+export default async function ArticlePage({ params }: Props) {
+  const { slug } = await params;
+  let article;
+  try {
+    article = await api.article(slug);
+  } catch {
+    notFound();
+  }
+  const structured = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: article.title,
+    description: article.summary,
+    datePublished: article.published_at,
+    dateModified: article.updated_at,
+    author: { '@type': 'Person', name: article.author.nickname },
+    mainEntityOfPage: `${site.url}/articles/${article.slug}/`,
+  };
+  return (
+    <main className="py-16">
+      <Container className="max-w-4xl">
+        <article>
+          <header className="border-b border-[var(--border)] pb-8">
+            <p className="text-sm text-[var(--text-muted)]">
+              {article.published_at
+                ? new Intl.DateTimeFormat('zh-CN', { dateStyle: 'long' }).format(
+                    new Date(article.published_at),
+                  )
+                : ''}
+            </p>
+            <h1 className="mt-3 font-display text-4xl font-semibold leading-tight sm:text-5xl">
+              {article.title}
+            </h1>
+            <p className="mt-5 text-lg text-[var(--text-muted)]">{article.summary}</p>
+            <ul className="mt-5 flex flex-wrap gap-2">
+              {article.tags.map((tag) => (
+                <li key={tag.id}>
+                  <Tag>{tag.name}</Tag>
+                </li>
+              ))}
+            </ul>
+          </header>
+          <div className="mt-10">
+            <MarkdownContent source={article.content} />
+          </div>
+        </article>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(structured).replaceAll('<', '\\u003c'),
+          }}
+        />
+      </Container>
+    </main>
+  );
+}
 ```
 
 ## 08-14 创建项目列表和详情
@@ -495,8 +865,28 @@ import type { Metadata } from 'next';
 import { ProjectCard } from '@/components/cards/project-card';
 import { Container } from '@/components/ui/container';
 import { api } from '@/lib/api';
-export const metadata: Metadata = { title: '项目', description: '从需求、架构、实现到部署的项目实践。' };
-export default async function ProjectsPage() { const page = await api.projects(100); return <main className="py-16"><Container><h1 className="font-display text-4xl font-semibold">项目</h1><p className="mt-3 text-[var(--text-muted)]">不仅展示结果，也记录工程过程与关键取舍。</p><div className="mt-10 grid gap-5 md:grid-cols-2">{page.items.length ? page.items.map((project) => <ProjectCard key={project.id} project={project} />) : <p>还没有公开项目。</p>}</div></Container></main>; }
+export const metadata: Metadata = {
+  title: '项目',
+  description: '从需求、架构、实现到部署的项目实践。',
+};
+export default async function ProjectsPage() {
+  const page = await api.projects(100);
+  return (
+    <main className="py-16">
+      <Container>
+        <h1 className="font-display text-4xl font-semibold">项目</h1>
+        <p className="mt-3 text-[var(--text-muted)]">不仅展示结果，也记录工程过程与关键取舍。</p>
+        <div className="mt-10 grid gap-5 md:grid-cols-2">
+          {page.items.length ? (
+            page.items.map((project) => <ProjectCard key={project.id} project={project} />)
+          ) : (
+            <p>还没有公开项目。</p>
+          )}
+        </div>
+      </Container>
+    </main>
+  );
+}
 ```
 
 创建 `web/app/(public)/projects/[slug]/page.tsx`：
@@ -512,9 +902,94 @@ import { api } from '@/lib/api';
 import { site } from '@/lib/site';
 
 type Props = { params: Promise<{ slug: string }> };
-export async function generateStaticParams() { const page = await api.projects(100); return page.items.map(({ slug }) => ({ slug })); }
-export async function generateMetadata({ params }: Props): Promise<Metadata> { const { slug } = await params; try { const project = await api.project(slug); return { title: project.name, description: project.summary, alternates: { canonical: `/projects/${project.slug}/` } }; } catch { return { title: '项目不存在' }; } }
-export default async function ProjectPage({ params }: Props) { const { slug } = await params; let project; try { project = await api.project(slug); } catch { notFound(); } const structured = { '@context': 'https://schema.org', '@type': 'SoftwareSourceCode', name: project.name, description: project.summary, codeRepository: project.repository_url, url: `${site.url}/projects/${project.slug}/`, programmingLanguage: project.technologies }; return <main className="py-16"><Container className="max-w-4xl"><article><header className="border-b border-[var(--border)] pb-8"><p className="text-sm text-coral">{project.featured ? '精选项目' : '项目'}</p><h1 className="mt-3 font-display text-4xl font-semibold sm:text-5xl">{project.name}</h1><p className="mt-5 text-lg text-[var(--text-muted)]">{project.summary}</p><ul className="mt-5 flex flex-wrap gap-2">{project.technologies.map((technology) => <li key={technology}><Tag>{technology}</Tag></li>)}</ul><div className="mt-6 flex gap-4">{project.repository_url ? <a className="inline-flex items-center gap-2" href={project.repository_url} rel="noreferrer" target="_blank"><Github size={18} aria-hidden />源码</a> : null}{project.demo_url ? <a className="inline-flex items-center gap-2" href={project.demo_url} rel="noreferrer" target="_blank"><ExternalLink size={18} aria-hidden />演示</a> : null}</div></header><div className="mt-10"><MarkdownContent source={project.content} /></div></article><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structured).replaceAll('<', '\\u003c') }} /></Container></main>; }
+export async function generateStaticParams() {
+  const page = await api.projects(100);
+  return page.items.map(({ slug }) => ({ slug }));
+}
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  try {
+    const project = await api.project(slug);
+    return {
+      title: project.name,
+      description: project.summary,
+      alternates: { canonical: `/projects/${project.slug}/` },
+    };
+  } catch {
+    return { title: '项目不存在' };
+  }
+}
+export default async function ProjectPage({ params }: Props) {
+  const { slug } = await params;
+  let project;
+  try {
+    project = await api.project(slug);
+  } catch {
+    notFound();
+  }
+  const structured = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareSourceCode',
+    name: project.name,
+    description: project.summary,
+    codeRepository: project.repository_url,
+    url: `${site.url}/projects/${project.slug}/`,
+    programmingLanguage: project.technologies,
+  };
+  return (
+    <main className="py-16">
+      <Container className="max-w-4xl">
+        <article>
+          <header className="border-b border-[var(--border)] pb-8">
+            <p className="text-sm text-coral">{project.featured ? '精选项目' : '项目'}</p>
+            <h1 className="mt-3 font-display text-4xl font-semibold sm:text-5xl">{project.name}</h1>
+            <p className="mt-5 text-lg text-[var(--text-muted)]">{project.summary}</p>
+            <ul className="mt-5 flex flex-wrap gap-2">
+              {project.technologies.map((technology) => (
+                <li key={technology}>
+                  <Tag>{technology}</Tag>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-6 flex gap-4">
+              {project.repository_url ? (
+                <a
+                  className="inline-flex items-center gap-2"
+                  href={project.repository_url}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  <Github size={18} aria-hidden />
+                  源码
+                </a>
+              ) : null}
+              {project.demo_url ? (
+                <a
+                  className="inline-flex items-center gap-2"
+                  href={project.demo_url}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  <ExternalLink size={18} aria-hidden />
+                  演示
+                </a>
+              ) : null}
+            </div>
+          </header>
+          <div className="mt-10">
+            <MarkdownContent source={project.content} />
+          </div>
+        </article>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(structured).replaceAll('<', '\\u003c'),
+          }}
+        />
+      </Container>
+    </main>
+  );
+}
 ```
 
 ## 08-15 创建归档、关于和 404
@@ -527,7 +1002,48 @@ import Link from 'next/link';
 import { Container } from '@/components/ui/container';
 import { api } from '@/lib/api';
 export const metadata: Metadata = { title: '归档', description: '按年份和月份浏览所有文章。' };
-export default async function ArchivePage() { const groups = await api.archive(); return <main className="py-16"><Container className="max-w-4xl"><h1 className="font-display text-4xl font-semibold">归档</h1><div className="mt-10 space-y-12">{groups.length ? groups.map((year) => <section key={year.year}><h2 className="font-display text-3xl font-semibold">{year.year}</h2>{year.months.map((month) => <div className="mt-6 grid gap-3 sm:grid-cols-[5rem_1fr]" key={month.month}><h3 className="text-[var(--text-muted)]">{month.month} 月</h3><ul className="space-y-3">{month.articles.map((article) => <li className="flex flex-wrap justify-between gap-3 border-b border-[var(--border)] pb-3" key={article.slug}><Link href={`/articles/${article.slug}/`}>{article.title}</Link><time className="text-sm text-[var(--text-muted)]">{new Intl.DateTimeFormat('zh-CN', { month: '2-digit', day: '2-digit' }).format(new Date(article.published_at))}</time></li>)}</ul></div>)}</section>) : <p>还没有归档文章。</p>}</div></Container></main>; }
+export default async function ArchivePage() {
+  const groups = await api.archive();
+  return (
+    <main className="py-16">
+      <Container className="max-w-4xl">
+        <h1 className="font-display text-4xl font-semibold">归档</h1>
+        <div className="mt-10 space-y-12">
+          {groups.length ? (
+            groups.map((year) => (
+              <section key={year.year}>
+                <h2 className="font-display text-3xl font-semibold">{year.year}</h2>
+                {year.months.map((month) => (
+                  <div className="mt-6 grid gap-3 sm:grid-cols-[5rem_1fr]" key={month.month}>
+                    <h3 className="text-[var(--text-muted)]">{month.month} 月</h3>
+                    <ul className="space-y-3">
+                      {month.articles.map((article) => (
+                        <li
+                          className="flex flex-wrap justify-between gap-3 border-b border-[var(--border)] pb-3"
+                          key={article.slug}
+                        >
+                          <Link href={`/articles/${article.slug}/`}>{article.title}</Link>
+                          <time className="text-sm text-[var(--text-muted)]">
+                            {new Intl.DateTimeFormat('zh-CN', {
+                              month: '2-digit',
+                              day: '2-digit',
+                            }).format(new Date(article.published_at))}
+                          </time>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </section>
+            ))
+          ) : (
+            <p>还没有归档文章。</p>
+          )}
+        </div>
+      </Container>
+    </main>
+  );
+}
 ```
 
 创建 `web/app/(public)/about/page.tsx`：
@@ -538,14 +1054,48 @@ import { MarkdownContent } from '@/components/markdown/markdown-content';
 import { Container } from '@/components/ui/container';
 import { api } from '@/lib/api';
 export const metadata: Metadata = { title: '关于', description: '关于我、学习方向和联系方式。' };
-export default async function AboutPage() { const settings = await api.settings(); return <main className="py-16"><Container className="max-w-4xl"><h1 className="font-display text-4xl font-semibold">关于</h1><div className="mt-8"><MarkdownContent source={settings.about_content} /></div><ul className="mt-10 flex flex-wrap gap-5">{settings.social_links.map((link) => <li key={link.url}><a href={link.url} rel="me noreferrer" target="_blank">{link.name}</a></li>)}</ul></Container></main>; }
+export default async function AboutPage() {
+  const settings = await api.settings();
+  return (
+    <main className="py-16">
+      <Container className="max-w-4xl">
+        <h1 className="font-display text-4xl font-semibold">关于</h1>
+        <div className="mt-8">
+          <MarkdownContent source={settings.about_content} />
+        </div>
+        <ul className="mt-10 flex flex-wrap gap-5">
+          {settings.social_links.map((link) => (
+            <li key={link.url}>
+              <a href={link.url} rel="me noreferrer" target="_blank">
+                {link.name}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </Container>
+    </main>
+  );
+}
 ```
 
 创建 `web/app/not-found.tsx`：
 
 ```tsx
 import Link from 'next/link';
-export default function NotFound() { return <main className="grid min-h-screen place-items-center px-5 text-center"><div><p className="font-display text-6xl font-semibold">404</p><h1 className="mt-4 text-2xl font-semibold">没有找到这个页面</h1><p className="mt-3 text-[var(--text-muted)]">地址可能已变化，或者内容尚未发布。</p><Link className="mt-6 inline-block" href="/">返回首页</Link></div></main>; }
+export default function NotFound() {
+  return (
+    <main className="grid min-h-screen place-items-center px-5 text-center">
+      <div>
+        <p className="font-display text-6xl font-semibold">404</p>
+        <h1 className="mt-4 text-2xl font-semibold">没有找到这个页面</h1>
+        <p className="mt-3 text-[var(--text-muted)]">地址可能已变化，或者内容尚未发布。</p>
+        <Link className="mt-6 inline-block" href="/">
+          返回首页
+        </Link>
+      </div>
+    </main>
+  );
+}
 ```
 
 ## 08-16 创建 Web App Manifest
@@ -655,33 +1205,33 @@ PS> Get-Item -LiteralPath 'web\out\rss.xml','web\out\sitemap.xml','web\out\robot
 在 `.github/workflows/ci.yml` 的 `jobs:` 下追加：
 
 ```yaml
-  frontend:
-    name: Frontend checks
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - name: Check out repository
-        uses: actions/checkout@v5
+frontend:
+  name: Frontend checks
+  runs-on: ubuntu-latest
+  timeout-minutes: 15
+  steps:
+    - name: Check out repository
+      uses: actions/checkout@v5
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v5
-        with:
-          node-version-file: .node-version
+    - name: Set up Node.js
+      uses: actions/setup-node@v5
+      with:
+        node-version-file: .node-version
 
-      - name: Install pnpm
-        run: corepack install --global pnpm@11.19.0
+    - name: Install pnpm
+      run: corepack install --global pnpm@11.19.0
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
 
-      - name: Lint
-        run: pnpm --dir web lint
+    - name: Lint
+      run: pnpm --dir web lint
 
-      - name: Type check
-        run: pnpm --dir web typecheck
+    - name: Type check
+      run: pnpm --dir web typecheck
 
-      - name: Check formatting
-        run: pnpm --dir web format:check
+    - name: Check formatting
+      run: pnpm --dir web format:check
 ```
 
 这里暂不运行 `next build`，因为它需要迁移后的 PostgreSQL 和真实 API。第 13 章添加 production-shaped build Job，不会使用前端 mock。

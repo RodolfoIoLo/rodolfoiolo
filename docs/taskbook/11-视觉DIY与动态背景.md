@@ -26,13 +26,13 @@ assets/work/
 
 五幕固定为：
 
-| 文件编号 | 场景 | 主色关系 | 构图要求 | 对应滚动位置 |
-|---|---|---|---|---|
-| 01 | 清晨山谷 | 冷青天空 + 暖日光 | 中央和左下留暗部给姓名 | 0%-20% |
-| 02 | 林间溪流 | 深绿 + 岩石灰 | 纹理细但不杂乱 | 20%-40% |
-| 03 | 高山湖泊 | 天蓝 + 植被绿 | 地平线位于上三分之一 | 40%-60% |
-| 04 | 云海日落 | 珊瑚暖光 + 中性云层 | 避免整图橙褐 | 60%-80% |
-| 05 | 星空营地 | 深炭黑 + 少量暖灯 | 不用纯深蓝单色 | 80%-100% |
+| 文件编号 | 场景     | 主色关系            | 构图要求               | 对应滚动位置 |
+| -------- | -------- | ------------------- | ---------------------- | ------------ |
+| 01       | 清晨山谷 | 冷青天空 + 暖日光   | 中央和左下留暗部给姓名 | 0%-20%       |
+| 02       | 林间溪流 | 深绿 + 岩石灰       | 纹理细但不杂乱         | 20%-40%      |
+| 03       | 高山湖泊 | 天蓝 + 植被绿       | 地平线位于上三分之一   | 40%-60%      |
+| 04       | 云海日落 | 珊瑚暖光 + 中性云层 | 避免整图橙褐           | 60%-80%      |
+| 05       | 星空营地 | 深炭黑 + 少量暖灯   | 不用纯深蓝单色         | 80%-100%     |
 
 每幕输出桌面 `2400x1350` 和移动 `1080x1440` 两种裁切。画面不能含文字、Logo、水印、人脸特写或版权角色。
 
@@ -165,13 +165,13 @@ PS> Get-ChildItem 'web\public\images\backgrounds' -File | Get-FileHash -Algorith
 
 只有本表中许可、处理记录和最终 SHA-256 全部非空的文件才能发布。原图和编辑工程位于加密备份，不进入 Git；最终 WebP/AVIF 进入 Git。
 
-| 场景 | 原始来源或生成方式 | 许可/条款链接与快照 | 作者/模型版本 | 生成日期/拍摄日期 | 编辑工程 | 最终文件 SHA-256 |
-|---|---|---|---|---|---|---|
-| 01 清晨山谷 | <填写> | <填写> | <填写> | <YYYY-MM-DD> | scene-01-master.kra | <填写桌面和移动两种格式的四个 hash> |
-| 02 林间溪流 | <填写> | <填写> | <填写> | <YYYY-MM-DD> | scene-02-master.kra | <填写> |
-| 03 高山湖泊 | <填写> | <填写> | <填写> | <YYYY-MM-DD> | scene-03-master.kra | <填写> |
-| 04 云海日落 | <填写> | <填写> | <填写> | <YYYY-MM-DD> | scene-04-master.kra | <填写> |
-| 05 星空营地 | <填写> | <填写> | <填写> | <YYYY-MM-DD> | scene-05-master.kra | <填写> |
+| 场景        | 原始来源或生成方式 | 许可/条款链接与快照 | 作者/模型版本 | 生成日期/拍摄日期 | 编辑工程            | 最终文件 SHA-256                    |
+| ----------- | ------------------ | ------------------- | ------------- | ----------------- | ------------------- | ----------------------------------- |
+| 01 清晨山谷 | <填写>             | <填写>              | <填写>        | <YYYY-MM-DD>      | scene-01-master.kra | <填写桌面和移动两种格式的四个 hash> |
+| 02 林间溪流 | <填写>             | <填写>              | <填写>        | <YYYY-MM-DD>      | scene-02-master.kra | <填写>                              |
+| 03 高山湖泊 | <填写>             | <填写>              | <填写>        | <YYYY-MM-DD>      | scene-03-master.kra | <填写>                              |
+| 04 云海日落 | <填写>             | <填写>              | <填写>        | <YYYY-MM-DD>      | scene-04-master.kra | <填写>                              |
+| 05 星空营地 | <填写>             | <填写>              | <填写>        | <YYYY-MM-DD>      | scene-05-master.kra | <填写>                              |
 
 ## 处理命令
 
@@ -223,13 +223,30 @@ import { motion, useReducedMotion, useScroll, useTransform, type MotionValue } f
 const source = (number: number, format: 'avif' | 'webp', mobile = false) =>
   `/images/backgrounds/scene-${String(number).padStart(2, '0')}-${mobile ? 'mobile' : 'desktop'}.${format}`;
 
-function Scene({ number, opacity, eager = false }: { number: number; opacity: number | MotionValue<number>; eager?: boolean }) {
+function Scene({
+  number,
+  opacity,
+  eager = false,
+}: {
+  number: number;
+  opacity: number | MotionValue<number>;
+  eager?: boolean;
+}) {
   return (
     <motion.picture className={`scene scene-${number}`} style={{ opacity }}>
       <source media="(max-width: 720px)" srcSet={source(number, 'avif', true)} type="image/avif" />
       <source media="(max-width: 720px)" srcSet={source(number, 'webp', true)} type="image/webp" />
       <source srcSet={source(number, 'avif')} type="image/avif" />
-      <img className="scene-image" src={source(number, 'webp')} alt="" width="2400" height="1350" fetchPriority={eager ? 'high' : 'auto'} loading={eager ? 'eager' : 'lazy'} decoding="async" />
+      <img
+        className="scene-image"
+        src={source(number, 'webp')}
+        alt=""
+        width="2400"
+        height="1350"
+        fetchPriority={eager ? 'high' : 'auto'}
+        loading={eager ? 'eager' : 'lazy'}
+        decoding="async"
+      />
     </motion.picture>
   );
 }
@@ -245,7 +262,17 @@ export function SceneBackground() {
 
   return (
     <div className="scene-background" aria-hidden="true">
-      {reduced ? <Scene number={1} opacity={1} eager /> : <><Scene number={1} opacity={first} eager /><Scene number={2} opacity={second} /><Scene number={3} opacity={third} /><Scene number={4} opacity={fourth} /><Scene number={5} opacity={fifth} /></>}
+      {reduced ? (
+        <Scene number={1} opacity={1} eager />
+      ) : (
+        <>
+          <Scene number={1} opacity={first} eager />
+          <Scene number={2} opacity={second} />
+          <Scene number={3} opacity={third} />
+          <Scene number={4} opacity={fourth} />
+          <Scene number={5} opacity={fifth} />
+        </>
+      )}
       <div className="scene-veil" />
     </div>
   );
@@ -271,7 +298,11 @@ export default async function PublicLayout({ children }: { children: ReactNode }
   return (
     <SmoothScroll>
       <SceneBackground />
-      <div className="public-layer"><Header />{children}<Footer settings={settings} /></div>
+      <div className="public-layer">
+        <Header />
+        {children}
+        <Footer settings={settings} />
+      </div>
     </SmoothScroll>
   );
 }
@@ -284,33 +315,190 @@ export default async function PublicLayout({ children }: { children: ReactNode }
 ```css
 @import 'tailwindcss';
 
-@theme { --color-ink: #18201d; --color-paper: #f5f7f2; --color-surface: #ffffff; --color-muted: #5f6b65; --color-line: #d6ddd7; --color-moss: #2f6b4f; --color-sky: #397b9c; --color-coral: #c75b4a; --font-sans: 'Noto Sans SC', 'Segoe UI', system-ui, sans-serif; --font-display: 'Space Grotesk', 'Segoe UI', system-ui, sans-serif; --font-mono: 'JetBrains Mono', Consolas, monospace; }
-:root { color-scheme: light; --page-bg: #f5f7f2; --panel-bg: rgb(255 255 255 / 78%); --text: #18201d; --text-muted: #46544e; --border: rgb(24 32 29 / 18%); --focus: #397b9c; --shadow: 0 12px 30px rgb(16 30 23 / 16%); }
-@media (prefers-color-scheme: dark) { :root { color-scheme: dark; --page-bg: #111714; --panel-bg: rgb(18 27 23 / 82%); --text: #eff4ef; --text-muted: #bdc9c2; --border: rgb(239 244 239 / 20%); --focus: #7fc4de; --shadow: 0 14px 36px rgb(0 0 0 / 34%); } }
-* { box-sizing: border-box; }
-html { scroll-behavior: smooth; background: var(--page-bg); }
-body { margin: 0; min-height: 100vh; background: transparent; color: var(--text); font-family: var(--font-sans); line-height: 1.7; letter-spacing: 0; }
-a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 4px; }
-img { display: block; max-width: 100%; }
-button, input, textarea, select { font: inherit; }
-:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
-.public-layer { position: relative; z-index: 1; min-height: 100vh; }
-.public-layer main > section { background: rgb(245 247 242 / 34%); }
-.glass { border: 1px solid var(--border); border-radius: 8px; background: var(--panel-bg); box-shadow: var(--shadow); backdrop-filter: blur(16px) saturate(118%); }
-.prose { max-width: 72ch; border-radius: 8px; padding: clamp(18px, 4vw, 44px); background: var(--panel-bg); box-shadow: var(--shadow); backdrop-filter: blur(18px) saturate(115%); }
-.prose h2, .prose h3 { font-family: var(--font-display); line-height: 1.25; }
-.prose pre { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; background: #101714; color: #eef6ef; }
-.prose code { font-family: var(--font-mono); }
-.prose :not(pre) > code { border-radius: 4px; padding: .12rem .34rem; background: color-mix(in srgb, var(--text) 9%, transparent); }
-.scene-background { position: fixed; z-index: 0; inset: 0; overflow: hidden; background: #17201d; pointer-events: none; }
-.scene { position: absolute; inset: 0; display: block; }
-.scene-image { width: 100%; height: 100%; max-width: none; object-fit: cover; transform: scale(1.045); animation: scene-drift 24s ease-in-out infinite alternate; }
-.scene-2 .scene-image, .scene-4 .scene-image { animation-direction: alternate-reverse; }
-.scene-veil { position: absolute; inset: 0; background: rgb(8 16 12 / 30%); }
-@keyframes scene-drift { from { transform: scale(1.045) translate3d(-.4%, -.25%, 0); } to { transform: scale(1.085) translate3d(.4%, .25%, 0); } }
-@media (max-width: 720px) { .scene-image { animation: none; transform: scale(1.02); } .public-layer main > section { background: rgb(245 247 242 / 44%); } }
-@media (prefers-color-scheme: dark) { .public-layer main > section { background: rgb(10 17 14 / 42%); } .scene-veil { background: rgb(5 10 8 / 42%); } }
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } .scene-image { transform: none; } }
+@theme {
+  --color-ink: #18201d;
+  --color-paper: #f5f7f2;
+  --color-surface: #ffffff;
+  --color-muted: #5f6b65;
+  --color-line: #d6ddd7;
+  --color-moss: #2f6b4f;
+  --color-sky: #397b9c;
+  --color-coral: #c75b4a;
+  --font-sans: 'Noto Sans SC', 'Segoe UI', system-ui, sans-serif;
+  --font-display: 'Space Grotesk', 'Segoe UI', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', Consolas, monospace;
+}
+:root {
+  color-scheme: light;
+  --page-bg: #f5f7f2;
+  --panel-bg: rgb(255 255 255 / 78%);
+  --text: #18201d;
+  --text-muted: #46544e;
+  --border: rgb(24 32 29 / 18%);
+  --focus: #397b9c;
+  --shadow: 0 12px 30px rgb(16 30 23 / 16%);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --page-bg: #111714;
+    --panel-bg: rgb(18 27 23 / 82%);
+    --text: #eff4ef;
+    --text-muted: #bdc9c2;
+    --border: rgb(239 244 239 / 20%);
+    --focus: #7fc4de;
+    --shadow: 0 14px 36px rgb(0 0 0 / 34%);
+  }
+}
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+  background: var(--page-bg);
+}
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-sans);
+  line-height: 1.7;
+  letter-spacing: 0;
+}
+a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+img {
+  display: block;
+  max-width: 100%;
+}
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+.public-layer {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+}
+.public-layer main > section {
+  background: rgb(245 247 242 / 34%);
+}
+.glass {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(16px) saturate(118%);
+}
+.prose {
+  max-width: 72ch;
+  border-radius: 8px;
+  padding: clamp(18px, 4vw, 44px);
+  background: var(--panel-bg);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px) saturate(115%);
+}
+.prose h2,
+.prose h3 {
+  font-family: var(--font-display);
+  line-height: 1.25;
+}
+.prose pre {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  background: #101714;
+  color: #eef6ef;
+}
+.prose code {
+  font-family: var(--font-mono);
+}
+.prose :not(pre) > code {
+  border-radius: 4px;
+  padding: 0.12rem 0.34rem;
+  background: color-mix(in srgb, var(--text) 9%, transparent);
+}
+.scene-background {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  background: #17201d;
+  pointer-events: none;
+}
+.scene {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+.scene-image {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+  transform: scale(1.045);
+  animation: scene-drift 24s ease-in-out infinite alternate;
+}
+.scene-2 .scene-image,
+.scene-4 .scene-image {
+  animation-direction: alternate-reverse;
+}
+.scene-veil {
+  position: absolute;
+  inset: 0;
+  background: rgb(8 16 12 / 30%);
+}
+@keyframes scene-drift {
+  from {
+    transform: scale(1.045) translate3d(-0.4%, -0.25%, 0);
+  }
+  to {
+    transform: scale(1.085) translate3d(0.4%, 0.25%, 0);
+  }
+}
+@media (max-width: 720px) {
+  .scene-image {
+    animation: none;
+    transform: scale(1.02);
+  }
+  .public-layer main > section {
+    background: rgb(245 247 242 / 44%);
+  }
+}
+@media (prefers-color-scheme: dark) {
+  .public-layer main > section {
+    background: rgb(10 17 14 / 42%);
+  }
+  .scene-veil {
+    background: rgb(5 10 8 / 42%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .scene-image {
+    transform: none;
+  }
+}
 ```
 
 遮罩使用单一透明色，不用装饰渐变。玻璃模糊只用于真实承载内容的表面，不在卡片中再嵌套卡片。
